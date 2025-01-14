@@ -16,10 +16,8 @@ const START_SERVER = () => {
 
   exitHook(() => {
     // eslint-disable-next-line no-console
-    console.log('4. Đang ngắt kết nối tới MongoDB Cloud Atlas...')
     CLOSE_DB().then(() => {
       // eslint-disable-next-line no-console
-      console.log('5. Đã ngắt kết nối tới MongoDB Cloud Atlas')
       process.exit()
     })
   })
@@ -28,7 +26,6 @@ const START_SERVER = () => {
     console.log(`Process exited with code: ${code}`)
   })
 }
-// chỉ khi kết nối db thành công thì mới start server BE
 // Immediately-Invoked/ anonymous async Function Expression (IIFE)
 (async () => {
   try {
