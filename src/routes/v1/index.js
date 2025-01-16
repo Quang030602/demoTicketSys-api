@@ -1,15 +1,15 @@
 
-import express from 'express'
+import express from  'express'
 import { StatusCodes } from 'http-status-codes'
-import { exampleRoute } from '~/routes/v1/exampleRoute'
+import { ticketRoute } from '~/routes/v1/ticketRoute'
 
 const Router = express.Router()
 Router.get('/status', (req, res) => {
-  res.status(StatusCodes.OK).json({
-    message: 'API V1 is working fine!' })
-
+    res.status(StatusCodes.OK).json({
+        message: 'API V1 is working fine!'
+    })
 })
 
-Router.use('/example', exampleRoute)
+Router.use('/tickets', ticketRoute)
 
 export const APIs_V1 = Router
