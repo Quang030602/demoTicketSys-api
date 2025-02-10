@@ -12,7 +12,7 @@ const START_SERVER = () => {
   const app = express()
 
   app.use(cors(corsOptions))
-
+  
   app.use(express.json())
 
   app.use('/v1', APIs_V1)

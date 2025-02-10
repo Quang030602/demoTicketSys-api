@@ -7,23 +7,27 @@ import { GET_DB } from '~/config/mongodb'
 // Define Collection (name & schema)
 const TICKET_COLLECTION_NAME = 'tickets'
 // Định nghĩa schema cho ticket
-// Định nghĩa schema cho ticket
 const TICKET_COLLECTION_SCHEMA = Joi.object({
   fullName: Joi.string().required().min(3).max(100).trim().strict(),
   email: Joi.string().email().required().trim().strict(),
   phone: Joi.string().pattern(/^[0-9]{10,15}$/).required().trim().strict(),
   address: Joi.string().required().min(5).max(255).trim().strict(),
-  description: Joi.string().required().min(3).max(1024).trim().strict(),
+  description: Joi.string().required().min(3).max(1024).allow('').strict(),
+
   file: Joi.string().allow(null, ''), // Chấp nhận null hoặc URL file
-  category: Joi.string().valid('technical', 'billing', 'support').required().trim().strict(),
-  subCategory: Joi.string().required().trim().strict(),
+  category: Joi.string().valid('general', 'technical', 'billing', 'support').required().trim().strict(),
+  subCategory: Joi.alternatives()
+    .conditional('category', {
+      is: 'general',
+      then: Joi.allow(null, ''),
+      otherwise: Joi.string().trim().strict().allow(null,'')
+    }),
   slug: Joi.string().trim().strict(), // ✅ Thêm slug vào schema
   status: Joi.string().valid('Open', 'In Progress', 'Resolved', 'Closed').default('Open'),
   createdAt: Joi.date().timestamp('javascript').default(Date.now),
   updatedAt: Joi.date().timestamp('javascript').default(null),
   _destroy: Joi.boolean().default(false),
 });
-  
 
 const validateBeforeCreate = async (data) => {
     return await TICKET_COLLECTION_SCHEMA.validateAsync(data, { abortEarly: false })

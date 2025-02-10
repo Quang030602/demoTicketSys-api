@@ -9,10 +9,10 @@ const createNew = async (req, res, next) => {
     email: Joi.string().email().required().trim().strict(),
     phone: Joi.string().pattern(/^[0-9]{10,15}$/).required().trim().strict(),
     address: Joi.string().required().min(5).max(255).trim().strict(),
-    description: Joi.string().required().min(3).max(1024).trim().strict(),
+    description: Joi.string().required().min(3).max(1024).strict(),
     file: Joi.string().allow(null, ''), // Chấp nhận null hoặc URL file
-    category: Joi.string().valid('technical', 'billing', 'support').required().trim().strict(),
-    subCategory: Joi.string().required().trim().strict()
+    category: Joi.string().valid('technical', 'billing', 'support','general').required().trim().strict(),
+    subCategory: Joi.string().required().trim().strict().allow(null,'')
   });
 
   try {
