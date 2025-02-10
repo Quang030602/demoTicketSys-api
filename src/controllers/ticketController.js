@@ -56,10 +56,48 @@ const getAll = async (req, res, next) => {
     next(error);
   }
 };
+const updateStatus = async (req, res, next) => {
+  try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      if (!['Open', 'In Progress', 'Resolved', 'Closed'].includes(status)) {
+          return res.status(StatusCodes.BAD_REQUEST).json({
+              message: "Invalid status value"
+          });
+      }
+
+      const updatedTicket = await ticketService.updateStatus(id, status);
+      if (!updatedTicket) {
+          return res.status(StatusCodes.NOT_FOUND).json({ message: "Ticket not found" });
+      }
+
+      res.status(StatusCodes.OK).json(updatedTicket);
+  } catch (error) {
+      next(error);
+  }
+};
+
+const getStatus = async (req, res, next) => {
+  try {
+      const { id } = req.params;
+      const ticket = await ticketService.findOneById(id);
+
+      if (!ticket) {
+          return res.status(StatusCodes.NOT_FOUND).json({ message: "Ticket not found" });
+      }
+
+      res.status(StatusCodes.OK).json({ status: ticket.status });
+  } catch (error) {
+      next(error);
+  }
+};
 
 export const ticketController = {
   createNew,
   updateById,
   deleteById,
   getAll,
+  updateStatus,
+  getStatus,
 };

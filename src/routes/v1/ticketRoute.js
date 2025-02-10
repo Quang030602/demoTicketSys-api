@@ -12,4 +12,7 @@ Router.route('/:id')
   .put(ticketController.updateById) // API cập nhật ticket
   .delete(ticketController.deleteById); // API xóa ticket
 
+Router.patch('/:id/status', ticketController.updateStatus);
+Router.get('/:id/status', ticketController.getStatus);
+
 export const ticketRoute = Router;

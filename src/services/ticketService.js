@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { slugify } from "~/utils/formatters";
 import { ticketModel } from "~/models/ticketModel";
+import { GET_DB } from '~/config/mongodb'
 
 const createNew = async (reqBody) => {
   try {
@@ -64,12 +65,39 @@ const getAll = async (query) => {
     throw error;
   }
 };
+const updateStatus = async (id, status) => {
+  try {
+      const db = GET_DB();
+      const updateResult = await db.collection("tickets").updateOne(
+          { _id: new ObjectId(String(id)) },
+          { $set: { status, updatedAt: Date.now() } }
+      );
 
+      if (updateResult.modifiedCount === 0) {
+          return null;
+      }
 
+      return await db.collection("tickets").findOne({ _id: new ObjectId(id) });
+  } catch (error) {
+      throw new Error(error);
+  }
+};
+const findOneById = async (id) => {
+  try {
+      const db = GET_DB();
+      const ticket = await db.collection("tickets").findOne({ _id: new ObjectId(id) });
+
+      return ticket;
+  } catch (error) {
+      throw new Error(error);
+  }
+};
 
 export const ticketService = {
   createNew,
   updateById,
   deleteById,
   getAll,
+  updateStatus,
+  findOneById,
 };
