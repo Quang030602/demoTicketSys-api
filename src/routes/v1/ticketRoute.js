@@ -1,15 +1,15 @@
+import express from 'express';
+import { ticketValidation } from '~/validations/ticketValidation';
+import { ticketController } from '~/controllers/ticketController';
 
-import express from  'express'
-import { StatusCodes } from 'http-status-codes'
-import { ticketValidation } from '~/validations/ticketValidation'
-import { ticketController } from '~/controllers/ticketController'
-
-const Router = express.Router()
+const Router = express.Router();
 
 Router.route('/')
-    .get( (req, res) => {
-        res.status(StatusCodes.OK).json({ message: 'API get list tickets' })
-    })
-    .post(ticketValidation.createNew, ticketController.createNew)
+  .get(ticketController.getAll) // API lấy danh sách ticket
+  .post(ticketValidation.createNew, ticketController.createNew); // API tạo ticket
 
-export const ticketRoute = Router
+Router.route('/:id')
+  .put(ticketController.updateById) // API cập nhật ticket
+  .delete(ticketController.deleteById); // API xóa ticket
+
+export const ticketRoute = Router;

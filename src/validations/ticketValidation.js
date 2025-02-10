@@ -1,27 +1,29 @@
-
-
 import Joi from 'joi';
 import { StatusCodes } from 'http-status-codes';
 import ApiError from '~/utils/ApiError';
 
-const createNew = async  (req, res, next) => {
-  const correctCondition = Joi.object({
-    title : Joi.string().required().min(3).max(50).trim().strict(),
-    description : Joi.string().required().min(3).max(256).trim().strict()
-  })
+const createNew = async (req, res, next) => {
+  // Cập nhật schema để phù hợp với dữ liệu mới
+  const ticketSchema = Joi.object({
+    fullName: Joi.string().required().min(3).max(100).trim().strict(),
+    email: Joi.string().email().required().trim().strict(),
+    phone: Joi.string().pattern(/^[0-9]{10,15}$/).required().trim().strict(),
+    address: Joi.string().required().min(5).max(255).trim().strict(),
+    description: Joi.string().required().min(3).max(1024).trim().strict(),
+    file: Joi.string().allow(null, ''), // Chấp nhận null hoặc URL file
+    category: Joi.string().valid('technical', 'billing', 'support').required().trim().strict(),
+    subCategory: Joi.string().required().trim().strict()
+  });
+
   try {
-    console.log(req.body)
-
-    await correctCondition.validateAsync(req.body, { abortEarly: false })
-    next()
-    // res.status(StatusCodes.CREATED).json({ message: 'POST from Validation' })
+    // Kiểm tra dữ liệu từ request body
+    await ticketSchema.validateAsync(req.body, { abortEarly: false });
+    next(); // Chuyển sang controller nếu hợp lệ
+  } catch (error) {
+    next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, error.message));
   }
-  catch (error) {
-    next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))
-  }
-}
-
+};
 
 export const ticketValidation = {
   createNew
-}
+};
