@@ -21,14 +21,14 @@ const createNew = async (reqBody) => {
 
 const updateById = async (id, updateData) => {
   try {
-    console.log("Service - Received ID:", id); // ✅ Debug ID
+    //console.log("Service - Received ID:", id); // ✅ Debug ID
 
     const objectId = new ObjectId(String(id));
     const updatedTicket = await ticketModel.updateById(objectId, updateData);
 
-    console.log("Service - Updated Ticket:", updatedTicket); // ✅ Debug dữ liệu sau cập nhật
+    //console.log("Service - Updated Ticket:", updatedTicket); // ✅ Debug dữ liệu sau cập nhật
 
-    return updatedTicket || null; // ✅ Đảm bảo luôn trả về giá trị hợp lệ
+    return updatedTicket;
   } catch (error) {
     console.error("Service - Error Updating Ticket:", error);
     throw error;

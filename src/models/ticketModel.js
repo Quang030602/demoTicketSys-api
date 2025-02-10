@@ -47,23 +47,52 @@ const findOneById = async (id) => {
     }
 }
 
+// Danh sách các trường hợp lệ
+const VALID_UPDATE_FIELDS = [
+  "fullName", "email", "phone", "address", "description", "file",
+  "category", "subCategory"
+];
+
 const updateById = async (id, updateData) => {
   try {
-    console.log("Updating Ticket ID:", id); // ✅ Debug ID
+    console.log("Updating Ticket ID:", id);
 
-    const result = await GET_DB()
-      .collection("tickets")
-      .findOneAndUpdate(
-        { _id: new ObjectId(id) },  // ✅ Chuyển ID thành ObjectId
-        { $set: updateData },
-        { returnDocument: "after" }  // ✅ Đảm bảo trả về document mới
-      );
+    const db = GET_DB();
+    if (!db) throw new Error("Database connection is not established");
 
-    console.log("MongoDB Result:", result); // ✅ Debug kết quả MongoDB
+    // 🔥 Lọc chỉ các trường hợp lệ
+    const filteredUpdateData = Object.keys(updateData)
+      .filter((key) => VALID_UPDATE_FIELDS.includes(key))
+      .reduce((obj, key) => {
+        obj[key] = updateData[key];
+        return obj;
+      }, {});
 
-    return result ? result.value : null;  // ✅ Trả về document hoặc null nếu không tìm thấy
+    console.log("Filtered Update Data:", filteredUpdateData);
+
+    if (Object.keys(filteredUpdateData).length === 0) {
+      console.warn("⚠ Warning: No valid fields to update.");
+      return null; // Không có gì để cập nhật
+    }
+
+    const updateResult = await db.collection("tickets").updateOne(
+      { _id: new ObjectId(id) },
+      { $set: filteredUpdateData }
+    );
+
+    console.log("MongoDB Update Result:", updateResult);
+
+    if (updateResult.modifiedCount === 0) {
+      console.warn("⚠ Warning: No document was modified.");
+    }
+
+    // 🔥 Trả về dữ liệu sau khi cập nhật
+    const updatedDocument = await db.collection("tickets").findOne({ _id: new ObjectId(id) });
+
+    console.log("MongoDB Updated Document:", updatedDocument);
+    return updatedDocument;
   } catch (error) {
-    console.error("MongoDB Update Error:", error); // ✅ Log lỗi nếu có
+    console.error("MongoDB Update Error:", error);
     throw new Error(error);
   }
 };
