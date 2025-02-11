@@ -123,7 +123,17 @@ const findAll = async (filter, page, limit) => {
     throw new Error(error);
   }
 };
-
+const findByStatus = async (status) => {
+  try {
+    const results = await GET_DB()
+      .collection(TICKET_COLLECTION_NAME)
+      .find({ status })
+      .toArray();
+    return results;
+  } catch (error) {
+    throw new Error(error);
+  }
+};
 export const ticketModel = {
     TICKET_COLLECTION_NAME,
     TICKET_COLLECTION_SCHEMA,
@@ -132,4 +142,5 @@ export const ticketModel = {
     updateById,
     deleteById,
     findAll,
+    findByStatus,
   };

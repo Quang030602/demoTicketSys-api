@@ -7,7 +7,11 @@ const Router = express.Router();
 Router.route('/')
   .get(ticketController.getAll) // API lấy danh sách ticket
   .post(ticketValidation.createNew, ticketController.createNew); // API tạo ticket
-
+  
+Router.get('/open', ticketController.getOpenTickets);
+Router.get('/closed', ticketController.getClosedTickets);
+  
+  
 Router.route('/:id')
   .put(ticketController.updateById) // API cập nhật ticket
   .delete(ticketController.deleteById); // API xóa ticket

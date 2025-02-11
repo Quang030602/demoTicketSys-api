@@ -92,7 +92,23 @@ const getStatus = async (req, res, next) => {
       next(error);
   }
 };
+const getOpenTickets = async (req, res, next) => {
+  try {
+    const tickets = await ticketService.getTicketsByStatus("Open");
+    res.status(StatusCodes.OK).json(tickets);
+  } catch (error) {
+    next(error);
+  }
+};
 
+const getClosedTickets = async (req, res, next) => {
+  try {
+    const tickets = await ticketService.getTicketsByStatus("Closed");
+    res.status(StatusCodes.OK).json(tickets);
+  } catch (error) {
+    next(error);
+  }
+};
 export const ticketController = {
   createNew,
   updateById,
@@ -100,4 +116,6 @@ export const ticketController = {
   getAll,
   updateStatus,
   getStatus,
+  getOpenTickets,
+  getClosedTickets
 };

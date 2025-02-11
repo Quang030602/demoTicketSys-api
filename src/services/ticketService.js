@@ -92,6 +92,14 @@ const findOneById = async (id) => {
       throw new Error(error);
   }
 };
+const getTicketsByStatus = async (status) => {
+  try {
+    const tickets = await ticketModel.findByStatus(status);
+    return tickets;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const ticketService = {
   createNew,
@@ -100,4 +108,5 @@ export const ticketService = {
   getAll,
   updateStatus,
   findOneById,
+  getTicketsByStatus,
 };
