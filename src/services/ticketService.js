@@ -54,8 +54,12 @@ const getAll = async (query) => {
     if (search) {
       filter = {
         $or: [
-          { category: { $regex: search, $options: "i" } },  // Case-insensitive search
-          { subCategory: { $regex: search, $options: "i" } }
+          { fullName: { $regex: search, $options: "i" } },
+          { email: { $regex: search, $options: "i" } },
+          { category: { $regex: search, $options: "i" } },
+          { subCategory: { $regex: search, $options: "i" } },
+          { description: { $regex: search, $options: "i" } },
+          { status: { $regex: search, $options: "i" } }
         ]
       };
     }
