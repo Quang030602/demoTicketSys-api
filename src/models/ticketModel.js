@@ -115,9 +115,7 @@ const findAll = async (filter, page, limit) => {
   try {
     return await GET_DB()
       .collection(TICKET_COLLECTION_NAME)
-      .find(filter)
-      .skip((page - 1) * limit)
-      .limit(limit)
+      .find(filter)      
       .toArray();
   } catch (error) {
     throw new Error(error);

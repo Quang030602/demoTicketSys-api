@@ -47,7 +47,7 @@ const deleteById = async (id) => {
 
 const getAll = async (query) => {
   try {
-    const { page = 1, limit, search } = query;
+    const {  search } = query;
     let filter = {};
 
     // Nếu có search, tìm trong category hoặc subCategory (KHÔNG phân biệt chữ hoa, chữ thường)
@@ -64,7 +64,7 @@ const getAll = async (query) => {
       };
     }
 
-    return await ticketModel.findAll(filter, parseInt(page), parseInt(limit));
+    return await ticketModel.findAll(filter);
   } catch (error) {
     throw error;
   }
