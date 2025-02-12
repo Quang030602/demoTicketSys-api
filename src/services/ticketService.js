@@ -47,7 +47,7 @@ const deleteById = async (id) => {
 
 const getAll = async (query) => {
   try {
-    const { page = 1, limit = 10, search } = query;
+    const { page = 1, limit, search } = query;
     let filter = {};
 
     // Nếu có search, tìm trong category hoặc subCategory (KHÔNG phân biệt chữ hoa, chữ thường)
