@@ -6,11 +6,12 @@ import { StatusCodes } from 'http-status-codes'
 import bcryptjs from 'bcryptjs'
 import { v4 as uuidv4 } from 'uuid'
 import { pickUser } from '~/utils/formatters'
-import { WEBSITE_DOMAIN } from '~/utils/constants'
+import { WEBSITE_DOMAIN, WHITELIST_DOMAINS } from '~/utils/constants'
 import nodemailer from 'nodemailer'
 import { env } from '~/config/environment'
 import { JWTProvider } from '~/providers/JwtProvider'
 import { pick } from 'lodash'
+
 
 // ⚡ Cấu hình Nodemailer
 const transporter = nodemailer.createTransport({
@@ -59,7 +60,7 @@ const createNew = async (reqBody) => {
     const getNewUser = await userModel.findOneById(createdUser.insertedId)
 
     // ✅ Gửi email xác thực bằng Nodemailer
-    const verificationLink = `${WEBSITE_DOMAIN}/account/verification?email=${getNewUser.email}&token=${getNewUser.verifyToken}`
+    const verificationLink = `${WHITELIST_DOMAINS}/account/verification?email=${getNewUser.email}&token=${getNewUser.verifyToken}`
     if (process.env.NODE_ENV === 'development') {
       console.log('Verification Link:', verificationLink)
     }
