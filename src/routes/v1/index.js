@@ -1,7 +1,8 @@
 import express from 'express';
 import { StatusCodes } from 'http-status-codes'
 
-import { ticketRoute } from './ticketRoute'; // Import route ticket
+import { ticketRoute } from './ticketRoute'; 
+import { userRoute } from './userRoute';
 
 const Router = express.Router();
 
@@ -14,5 +15,7 @@ Router.get('/status', (req, res) => {
 
 // Thêm route `/tickets`
 Router.use('/tickets', ticketRoute);
+
+Router.use('/users', userRoute)
 
 export const APIs_V1 = Router;
