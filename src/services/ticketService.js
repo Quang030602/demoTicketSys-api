@@ -5,18 +5,25 @@ import { GET_DB } from '~/config/mongodb'
 
 const createNew = async (reqBody) => {
   try {
-    // Tạo slug nhưng không đưa vào validate
-    const newTicket = { ...reqBody, slug: slugify(reqBody.fullName) };
-    
-    // Xóa slug trước khi validate
-    delete newTicket.slug;
+    console.log("✅ userId nhận từ frontend:", reqBody.userId, "Type:", typeof reqBody.userId);
 
-    const createTicket = await ticketModel.createNew(newTicket);
-    return await ticketModel.findOneById(createTicket.insertedId);
+    if (!reqBody.userId || typeof reqBody.userId !== "string") {
+      throw new Error("Invalid userId format: userId must be a string");
+    }
+
+    // ✅ Chuyển userId thành ObjectId nếu backend yêu cầu
+    const newTicket = { ...reqBody, userId: reqBody.userId };
+
+    console.log("✅ userId trước khi lưu vào DB:", newTicket.userId, "Type:", typeof newTicket.userId);
+
+    const createdTicket = await ticketModel.createNew(newTicket);
+    return await ticketModel.findOneById(createdTicket.insertedId);
   } catch (error) {
+    console.error("❌ Lỗi trong ticketService:", error.message);
     throw error;
   }
 };
+
 
 // Cập nhật ticket
 

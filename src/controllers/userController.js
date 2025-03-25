@@ -6,12 +6,20 @@ import ApiError from '~/utils/ApiError'
 
 const createNew = async (req, res, next) => {
   try {
-    const createdUser = await userService.createNew(req.body)
-    res.status(StatusCodes.CREATED).json(createdUser)
+    const userId = req.jwtDecoded?._id; // ✅ Lấy userId từ token
+
+    if (!userId) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized: Missing userId" });
+    }
+
+    const ticketData = { ...req.body, userId }; // ✅ Thêm userId vào dữ liệu gửi đến Service
+
+    const ticket = await ticketService.createNew(ticketData);
+    res.status(StatusCodes.CREATED).json(ticket);
   } catch (error) {
-    next(error)
+    next(error);
   }
-}
+};
 
 const verifyAccount = async (req, res, next) => {
   try {
@@ -23,25 +31,30 @@ const verifyAccount = async (req, res, next) => {
 }
 const login = async (req, res, next) => {
   try {
-    const result = await userService.login(req.body)
-    res.cookie('accessToken', result.accessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'None',
-      maxAge: ms('14 days')
-    })
+    const result = await userService.login(req.body);
 
-    res.cookie('refreshToken', result.refreshToken, {
+    if (!result) {
+      throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Login failed, no data returned");
+    }
+
+    res.cookie("accessToken", result.accessToken, {
       httpOnly: true,
       secure: true,
-      sameSite: 'None',
-      maxAge: ms('14 days')
-    })
-    res.status(StatusCodes.OK).json(result)
+      sameSite: "None",
+      maxAge: ms("14 days"),
+    });
+    console.log("Login Response Data:", result);
+
+    res.status(StatusCodes.OK).json({
+      message: "Login successful",
+      userId: result.userId, // ✅ Đảm bảo gửi userId về frontend
+    });
   } catch (error) {
-    next(error)
+    console.error("Login Controller Error:", error.message);
+    next(error);
   }
-}
+};
+
 
 const logout = async (req, res, next) => {
   try {

@@ -1,30 +1,32 @@
-import { StatusCodes } from 'http-status-codes'
-import { JWTProvider } from '~/providers/JwtProvider'
-import { env } from '~/config/environment'
-import ApiError from '~/utils/ApiError'
+import jwt from "jsonwebtoken";
+import { env } from "~/config/environment";
+import ApiError from "~/utils/ApiError";
+import { StatusCodes } from "http-status-codes";
 
-const isAuthorized = async (req, res, next) => {
-  const clientAccessToken = req.cookies?.accessToken
-  const clientRefreshToken = req.cookies?.refreshToken
+export const authMiddleware = {
+  isAuthorized: (req, res, next) => {
+    try {
+      // ✅ Kiểm tra token từ cả headers và cookies
+      const token =
+        req.headers.authorization?.split(" ")[1] || req.cookies?.accessToken;
 
-  if (!clientAccessToken || !clientRefreshToken) {
-    return next(new ApiError(StatusCodes.UNAUTHORIZED, 'Unauthorized(token not found)'))
-  }
-  try {
-    // Decode the token to check its validity
-    const accessTokenDecoded = await JWTProvider.verifyToken(clientAccessToken, env.ACCESS_TOKEN_SECRET_SIGNATURE)
-    // If the token is valid, save the decoded information to req.jwtDecoded
-    req.jwtDecoded = accessTokenDecoded
-    // Allow the request to proceed
-    next()
-  } catch (error) {
-    // If the accessToken has expired, return an error to the frontend to call the refresh token API
-    if (error?.message?.includes('jwt expired')) {
-      return next(new ApiError(StatusCodes.GONE, 'Need to refresh token'))
+      if (!token) {
+        throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized (token not found)");
+      }
+
+      // ✅ Giải mã token
+      const decoded = jwt.verify(token, env.ACCESS_TOKEN_SECRET_SIGNATURE);
+      req.jwtDecoded = decoded; // ✅ Lưu thông tin user vào request
+
+      console.log("Received Token:", token);
+      req.jwtDecoded = decoded;
+      console.log("Decoded User ID:", req.jwtDecoded._id); // ✅ Debug
+
+
+      next();
+    } catch (error) {
+      console.error("JWT Error:", error.message);
+      next(new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized (invalid token)"));
     }
-    // If the accessToken is invalid for any other reason, return a 401 error to the frontend to call the logout API
-    return next(new ApiError(StatusCodes.UNAUTHORIZED, 'Unauthorized'))
   }
-}
-
-export const authMiddleware = { isAuthorized }
+};

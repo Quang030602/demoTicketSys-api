@@ -5,6 +5,7 @@ import ApiError from '~/utils/ApiError';
 const createNew = async (req, res, next) => {
   // Cập nhật schema để phù hợp với dữ liệu mới
   const ticketSchema = Joi.object({
+    userId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required(),
     fullName: Joi.string().required().min(3).max(100).trim().strict(),
     email: Joi.string().email().required().trim().strict(),
     phone: Joi.string().pattern(/^[0-9]{10,15}$/).required().trim().strict(),

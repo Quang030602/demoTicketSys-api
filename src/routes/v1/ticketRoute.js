@@ -1,12 +1,13 @@
 import express from 'express';
 import { ticketValidation } from '~/validations/ticketValidation';
 import { ticketController } from '~/controllers/ticketController';
+import { authMiddleware } from '~/middlewares/authMiddleware';
 
 const Router = express.Router();
 
 Router.route('/')
-  .get(ticketController.getAll) // API lấy danh sách ticket
-  .post(ticketValidation.createNew, ticketController.createNew); // API tạo ticket
+  .get(ticketController.getAll)
+  .post(authMiddleware.isAuthorized, ticketValidation.createNew, ticketController.createNew);
   
 Router.get('/open', ticketController.getOpenTickets);
 Router.get('/closed', ticketController.getClosedTickets);
@@ -18,5 +19,7 @@ Router.route('/:id')
 
 Router.patch('/:id/status', ticketController.updateStatus);
 Router.get('/:id/status', ticketController.getStatus);
+
+Router.get('/user/:userId', ticketController.getTicketsByUser);
 
 export const ticketRoute = Router;

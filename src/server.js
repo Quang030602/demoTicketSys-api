@@ -7,6 +7,7 @@ import {CONNECT_DB, GET_DB, CLOSE_DB} from '~/config/mongodb'
 import {env} from '~/config/environment'
 import {APIs_V1} from '~/routes/v1'
 import {errorHandlingMiddleware} from '~/middlewares/errorHandlingMiddleware'
+import cookieParser from 'cookie-parser';
 
 const START_SERVER = () => {
   const app = express()
@@ -14,7 +15,13 @@ const START_SERVER = () => {
   app.use(cors(corsOptions))
   
   app.use(express.json())
-
+  app.use(cookieParser()); // ✅ Middleware đọc cookies
+  app.use(
+    cors({
+      origin: "http://localhost:5173", // ✅ Đúng domain frontend
+      credentials: true, // ✅ Cho phép gửi cookies
+    }),
+  );
   app.use('/v1', APIs_V1)
 
   app.use(errorHandlingMiddleware)

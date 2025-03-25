@@ -111,35 +111,48 @@ const verifyAccount = async (reqBody) => {
 
 const login = async (reqBody) => {
   try {
-    const existUser = await userModel.findOneByEmail(reqBody.email)
-    if (!existUser) { throw new ApiError(StatusCodes.NOT_FOUND, 'User not found')}
-    if (!existUser.isActive) { throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your account has not been activated') }
+    const existUser = await userModel.findOneByEmail(reqBody.email);
+    if (!existUser) { throw new ApiError(StatusCodes.NOT_FOUND, "User not found"); }
+    if (!existUser.isActive) { throw new ApiError(StatusCodes.NOT_ACCEPTABLE, "Your account has not been activated"); }
     if (!bcryptjs.compareSync(reqBody.password, existUser.password)) {
-      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your email or password is incorrect')
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, "Your email or password is incorrect");
     }
+
     const userInfo = {
-      _id: existUser._id,
-      email: existUser.email
-    }
+      _id: existUser._id.toString(), // ✅ Chắc chắn userId là string
+      email: existUser.email,
+    };
+
     const accessToken = await JWTProvider.generateToken(
       userInfo,
       env.ACCESS_TOKEN_SECRET_SIGNATURE,
       env.ACCESS_TOKEN_LIFE
-    )
+    );
     const refreshToken = await JWTProvider.generateToken(
       userInfo,
       env.REFRESH_TOKEN_SECRET_SIGNATURE,
       env.REFRESH_TOKEN_LIFE
-    )
+    );
+
+    // ✅ Debug để kiểm tra dữ liệu trước khi return
+    console.log("Login Success - Returning:", {
+      accessToken,
+      refreshToken,
+      userId: existUser._id.toString(),
+    });
+
     return {
       accessToken,
       refreshToken,
-      ...pickUser(existUser)
-    }
+      userId: existUser._id.toString(), // ✅ Trả về userId rõ ràng
+      ...pickUser(existUser),
+    };
   } catch (error) {
-    throw error
+    console.error("Login Error:", error.message);
+    throw error;
   }
-}
+};
+
 const refreshToken = async (clientRefreshToken) => {
   try {
     const refreshTokenDecoded = await JWTProvider.verifyToken(

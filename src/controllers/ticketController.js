@@ -4,12 +4,21 @@ import { ticketService } from "~/services/ticketService";
 
 const createNew = async (req, res, next) => {
   try {
-    const ticket = await ticketService.createNew(req.body);
+    const userId = req.jwtDecoded?._id; // ✅ Lấy userId từ token
+
+    if (!userId) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized: Missing userId" });
+    }
+
+    const ticketData = { ...req.body, userId }; // ✅ Thêm userId vào dữ liệu gửi đến Service
+
+    const ticket = await ticketService.createNew(ticketData);
     res.status(StatusCodes.CREATED).json(ticket);
   } catch (error) {
     next(error);
   }
 };
+
 
 const updateById = async (req, res, next) => {
   try {
@@ -109,6 +118,23 @@ const getClosedTickets = async (req, res, next) => {
     next(error);
   }
 };
+const getTicketsByUser = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+
+    if (!ObjectId.isValid(userId)) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: "Invalid user ID format.",
+        receivedId: userId,
+      });
+    }
+
+    const tickets = await ticketService.getTicketsByUser(userId);
+    res.status(StatusCodes.OK).json(tickets);
+  } catch (error) {
+    next(error);
+  }
+};
 export const ticketController = {
   createNew,
   updateById,
@@ -117,5 +143,6 @@ export const ticketController = {
   updateStatus,
   getStatus,
   getOpenTickets,
-  getClosedTickets
+  getClosedTickets,
+  getTicketsByUser
 };
