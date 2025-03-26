@@ -27,11 +27,14 @@ const createNew = async (reqBody) => {
 
 // Cập nhật ticket
 
-const updateById = async (id, updateData) => {
+const updateById = async (id, updateData, ticketFile) => {
   try {
     //console.log("Service - Received ID:", id); // ✅ Debug ID
 
     const objectId = new ObjectId(String(id));
+    if (ticketFile) {
+      updateData.file = ticketFile.filename;
+    } 
     const updatedTicket = await ticketModel.updateById(objectId, updateData);
 
     //console.log("Service - Updated Ticket:", updatedTicket); // ✅ Debug dữ liệu sau cập nhật

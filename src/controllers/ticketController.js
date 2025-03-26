@@ -23,9 +23,11 @@ const createNew = async (req, res, next) => {
 const updateById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    
+    const ticketFile = req.file;   
+    console.log("Controller -> File uploaded:", ticketFile);
+   
     // Debug ID
-    //console.log("Received ID:", id);
+    console.log("Received ID:", id);
     //console.log("Is ID Valid:", ObjectId.isValid(id));
 
     // Kiểm tra nếu ID không hợp lệ
@@ -36,7 +38,7 @@ const updateById = async (req, res, next) => {
       });
     }
 
-    const ticket = await ticketService.updateById(id, req.body);
+    const ticket = await ticketService.updateById(id, req.body,ticketFile);
     
     if (!ticket) {
       return res.status(StatusCodes.NOT_FOUND).json({ message: "Ticket not found." });
