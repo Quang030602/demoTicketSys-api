@@ -54,21 +54,24 @@ const deleteById = async (id) => {
 
 const getAll = async (query) => {
   try {
-    const {  search } = query;
+    const { search, userId } = query; // Lấy userId từ query
     let filter = {};
 
-    // Nếu có search, tìm trong category hoặc subCategory (KHÔNG phân biệt chữ hoa, chữ thường)
+    // Nếu có userId, thêm vào bộ lọc
+    if (userId) {
+      filter.userId = userId;
+    }
+
+    // Nếu có search, tìm trong các trường liên quan (KHÔNG phân biệt chữ hoa, chữ thường)
     if (search) {
-      filter = {
-        $or: [
-          { fullName: { $regex: search, $options: "i" } },
-          { email: { $regex: search, $options: "i" } },
-          { category: { $regex: search, $options: "i" } },
-          { subCategory: { $regex: search, $options: "i" } },
-          { description: { $regex: search, $options: "i" } },
-          { status: { $regex: search, $options: "i" } }
-        ]
-      };
+      filter.$or = [
+        { fullName: { $regex: search, $options: "i" } },
+        { email: { $regex: search, $options: "i" } },
+        { category: { $regex: search, $options: "i" } },
+        { subCategory: { $regex: search, $options: "i" } },
+        { description: { $regex: search, $options: "i" } },
+        { status: { $regex: search, $options: "i" } },
+      ];
     }
 
     return await ticketModel.findAll(filter);
@@ -111,6 +114,15 @@ const getTicketsByStatus = async (status) => {
     throw error;
   }
 };
+const getTicketsByUser = async (userId) => {
+  try {
+    const tickets = await ticketModel.findAll({ userId }); // Lọc ticket theo userId
+    return tickets;
+  } catch (error) {
+    throw error;
+  }
+};
+
 
 export const ticketService = {
   createNew,
@@ -120,4 +132,5 @@ export const ticketService = {
   updateStatus,
   findOneById,
   getTicketsByStatus,
+  getTicketsByUser
 };

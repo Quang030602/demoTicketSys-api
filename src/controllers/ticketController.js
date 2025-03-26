@@ -120,21 +120,21 @@ const getClosedTickets = async (req, res, next) => {
 };
 const getTicketsByUser = async (req, res, next) => {
   try {
-    const { userId } = req.params;
+    const userId = req.jwtDecoded?._id; // Lấy userId từ token
 
-    if (!ObjectId.isValid(userId)) {
-      return res.status(StatusCodes.BAD_REQUEST).json({
-        message: "Invalid user ID format.",
-        receivedId: userId,
+    if (!userId) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({
+        message: "Unauthorized: Missing userId",
       });
     }
 
-    const tickets = await ticketService.getTicketsByUser(userId);
+    const tickets = await ticketService.getTicketsByUser(userId); // Gọi service để lấy danh sách ticket
     res.status(StatusCodes.OK).json(tickets);
   } catch (error) {
     next(error);
   }
 };
+
 export const ticketController = {
   createNew,
   updateById,
