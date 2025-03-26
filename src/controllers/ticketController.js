@@ -25,8 +25,8 @@ const updateById = async (req, res, next) => {
     const { id } = req.params;
     
     // Debug ID
-    console.log("Received ID:", id);
-    console.log("Is ID Valid:", ObjectId.isValid(id));
+    //console.log("Received ID:", id);
+    //console.log("Is ID Valid:", ObjectId.isValid(id));
 
     // Kiểm tra nếu ID không hợp lệ
     if (!ObjectId.isValid(id)) {
@@ -59,12 +59,21 @@ const deleteById = async (req, res, next) => {
 
 const getAll = async (req, res, next) => {
   try {
-    const tickets = await ticketService.getAll(req.query);
+    const userId = req.jwtDecoded?._id; // ✅ Lấy userId từ token đã giải mã
+
+    if (!userId) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized: Missing userId" });
+    }
+
+    const query = { ...req.query, userId }; // ✅ Truyền userId vào query để lọc theo user
+
+    const tickets = await ticketService.getAll(query);
     res.status(StatusCodes.OK).json(tickets);
   } catch (error) {
     next(error);
   }
 };
+
 const updateStatus = async (req, res, next) => {
   try {
       const { id } = req.params;

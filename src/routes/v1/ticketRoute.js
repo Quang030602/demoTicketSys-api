@@ -6,8 +6,9 @@ import { authMiddleware } from '~/middlewares/authMiddleware';
 const Router = express.Router();
 
 Router.route('/')
-  .get(ticketController.getAll)
+  .get(authMiddleware.isAuthorized, ticketController.getAll) // ✅ Thêm middleware xác thực
   .post(authMiddleware.isAuthorized, ticketValidation.createNew, ticketController.createNew);
+
   
 Router.get('/open', ticketController.getOpenTickets);
 Router.get('/closed', ticketController.getClosedTickets);

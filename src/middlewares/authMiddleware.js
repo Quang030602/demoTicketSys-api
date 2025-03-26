@@ -18,9 +18,9 @@ export const authMiddleware = {
       const decoded = jwt.verify(token, env.ACCESS_TOKEN_SECRET_SIGNATURE);
       req.jwtDecoded = decoded; // ✅ Lưu thông tin user vào request
 
-      console.log("Received Token:", token);
+      //console.log("Received Token:", token);
       req.jwtDecoded = decoded;
-      console.log("Decoded User ID:", req.jwtDecoded._id); // ✅ Debug
+      //console.log("Decoded User ID:", req.jwtDecoded._id); // ✅ Debug
 
 
       next();

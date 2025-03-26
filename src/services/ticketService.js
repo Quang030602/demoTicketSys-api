@@ -5,7 +5,7 @@ import { GET_DB } from '~/config/mongodb'
 
 const createNew = async (reqBody) => {
   try {
-    console.log("✅ userId nhận từ frontend:", reqBody.userId, "Type:", typeof reqBody.userId);
+    //console.log("✅ userId nhận từ frontend:", reqBody.userId, "Type:", typeof reqBody.userId);
 
     if (!reqBody.userId || typeof reqBody.userId !== "string") {
       throw new Error("Invalid userId format: userId must be a string");
@@ -14,7 +14,7 @@ const createNew = async (reqBody) => {
     // ✅ Chuyển userId thành ObjectId nếu backend yêu cầu
     const newTicket = { ...reqBody, userId: reqBody.userId };
 
-    console.log("✅ userId trước khi lưu vào DB:", newTicket.userId, "Type:", typeof newTicket.userId);
+    //console.log("✅ userId trước khi lưu vào DB:", newTicket.userId, "Type:", typeof newTicket.userId);
 
     const createdTicket = await ticketModel.createNew(newTicket);
     return await ticketModel.findOneById(createdTicket.insertedId);
@@ -54,14 +54,18 @@ const deleteById = async (id) => {
 
 const getAll = async (query) => {
   try {
+    //console.log("Query in service:", query);
     const { search, userId } = query; // Lấy userId từ query
     let filter = {};
 
     // Nếu có userId, thêm vào bộ lọc
     if (userId) {
+      if (!ObjectId.isValid(userId)) {
+        throw new Error("Invalid userId format. Must be a valid ObjectId.");
+      }
       filter.userId = userId;
     }
-
+    
     // Nếu có search, tìm trong các trường liên quan (KHÔNG phân biệt chữ hoa, chữ thường)
     if (search) {
       filter.$or = [
@@ -73,7 +77,7 @@ const getAll = async (query) => {
         { status: { $regex: search, $options: "i" } },
       ];
     }
-
+    //console.log("Filter:", filter.userId);
     return await ticketModel.findAll(filter);
   } catch (error) {
     throw error;

@@ -6,16 +6,8 @@ import ApiError from '~/utils/ApiError'
 
 const createNew = async (req, res, next) => {
   try {
-    const userId = req.jwtDecoded?._id; // ✅ Lấy userId từ token
-
-    if (!userId) {
-      return res.status(StatusCodes.UNAUTHORIZED).json({ message: "Unauthorized: Missing userId" });
-    }
-
-    const ticketData = { ...req.body, userId }; // ✅ Thêm userId vào dữ liệu gửi đến Service
-
-    const ticket = await ticketService.createNew(ticketData);
-    res.status(StatusCodes.CREATED).json(ticket);
+    const createdUser = await userService.createNew(req.body)
+    res.status(StatusCodes.CREATED).json(createdUser)
   } catch (error) {
     next(error);
   }
@@ -43,7 +35,15 @@ const login = async (req, res, next) => {
       sameSite: "None",
       maxAge: ms("14 days"),
     });
-    console.log("Login Response Data:", result);
+
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: ms("30 days") // refresh token thường lâu hơn
+    });
+
+    //console.log("Login Response Data:", result);
 
     res.status(StatusCodes.OK).json({
       message: "Login successful",
@@ -60,7 +60,7 @@ const logout = async (req, res, next) => {
   try {
     res.clearCookie('accessToken')
     res.clearCookie('refreshToken')
-    res.status(StatusCodes.OK).json({ loggedOut: true })
+    res.status(StatusCodes.OK).json({ loggedOut: true, message: 'Logged out successfully' })
   } catch (error) {
     next(error)
   }

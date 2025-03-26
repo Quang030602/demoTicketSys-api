@@ -33,7 +33,7 @@ const validateBeforeCreate = async (data) => {
 
 const createNew = async (data) => {
   try {
-    console.log("✅ Trước khi validate - userId:", data.userId, "Type:", typeof data.userId);
+    //console.log("✅ Trước khi validate - userId:", data.userId, "Type:", typeof data.userId);
 
     if (!data.userId || typeof data.userId !== "string") {
       throw new Error("userId must be a string");
@@ -41,7 +41,7 @@ const createNew = async (data) => {
 
     const validData = await TICKET_COLLECTION_SCHEMA.validateAsync(data, { abortEarly: false });
 
-    console.log("✅ Sau khi validate - userId:", validData.userId, "Type:", typeof validData.userId);
+    //console.log("✅ Sau khi validate - userId:", validData.userId, "Type:", typeof validData.userId);
 
     const result = await GET_DB().collection(TICKET_COLLECTION_NAME).insertOne(validData);
     return result;
@@ -68,7 +68,7 @@ const VALID_UPDATE_FIELDS = [
 
 const updateById = async (id, updateData) => {
   try {
-    console.log("Updating Ticket ID:", id);
+    //console.log("Updating Ticket ID:", id);
 
     const db = GET_DB();
     if (!db) throw new Error("Database connection is not established");
@@ -100,7 +100,7 @@ const updateById = async (id, updateData) => {
     // 🔥 Trả về dữ liệu sau khi cập nhật
     const updatedDocument = await db.collection("tickets").findOne({ _id: new ObjectId(id) });
 
-    console.log("MongoDB Updated Document:", updatedDocument);
+    //console.log("MongoDB Updated Document:", updatedDocument);
     return updatedDocument;
   } catch (error) {
     console.error("MongoDB Update Error:", error);
@@ -120,6 +120,7 @@ const deleteById = async (id) => {
 
 const findAll = async (filter) => {
   try {
+    //console.log("Filter in findAll:", filter);
     return await GET_DB().collection(TICKET_COLLECTION_NAME).find(filter).toArray();
   } catch (error) {
     throw new Error(error);

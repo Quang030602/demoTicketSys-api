@@ -61,10 +61,8 @@ const createNew = async (reqBody) => {
 
     // ✅ Gửi email xác thực bằng Nodemailer
     const verificationLink = `${WHITELIST_DOMAINS}/account/verification?email=${getNewUser.email}&token=${getNewUser.verifyToken}`
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Verification Link:', verificationLink)
-    }
-    console.log('email:', getNewUser.email)
+    
+   // console.log('email:', getNewUser.email)
     const mailOptions = {
       from: `"AiMier Support" <${process.env.ADMIN_EMAIL_ADDRESS}>`,
       to: getNewUser.email,
@@ -78,7 +76,7 @@ const createNew = async (reqBody) => {
 
     try {
       await transporter.sendMail(mailOptions)
-      console.log('Verification email sent successfully')
+      //console.log('Verification email sent successfully')
     } catch (error) {
       console.error('Failed to send verification email:', error.message || error)
       throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'User created, but failed to send verification email')
@@ -135,11 +133,11 @@ const login = async (reqBody) => {
     );
 
     // ✅ Debug để kiểm tra dữ liệu trước khi return
-    console.log("Login Success - Returning:", {
-      accessToken,
-      refreshToken,
-      userId: existUser._id.toString(),
-    });
+    // console.log("Login Success - Returning:", {
+    //   accessToken,
+    //   refreshToken,
+    //   userId: existUser._id.toString(),
+    // });
 
     return {
       accessToken,
