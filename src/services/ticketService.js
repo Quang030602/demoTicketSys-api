@@ -2,19 +2,32 @@ import { ObjectId } from "mongodb";
 import { slugify } from "~/utils/formatters";
 import { ticketModel } from "~/models/ticketModel";
 import { GET_DB } from '~/config/mongodb'
+import { CloudinaryProvider } from "~/providers/CloudinaryProvider";
 
-const createNew = async (reqBody) => {
+const createNew = async (reqBody, ticketFile) => {
   try {
-    //console.log("✅ userId nhận từ frontend:", reqBody.userId, "Type:", typeof reqBody.userId);
+    let fileUrl = null;
+    let originalFileName = null;
+    let publicId = null;
 
-    if (!reqBody.userId || typeof reqBody.userId !== "string") {
-      throw new Error("Invalid userId format: userId must be a string");
+    if (ticketFile) {
+      originalFileName = ticketFile.originalname;
+      const uploadResult = await CloudinaryProvider.streamUpload(
+        ticketFile.buffer,
+        'tickets',
+        originalFileName
+      );
+      fileUrl = uploadResult.secure_url;
+      publicId = uploadResult.public_id; // Lưu public_id
     }
 
-    // ✅ Chuyển userId thành ObjectId nếu backend yêu cầu
-    const newTicket = { ...reqBody, userId: reqBody.userId };
-
-    //console.log("✅ userId trước khi lưu vào DB:", newTicket.userId, "Type:", typeof newTicket.userId);
+    const newTicket = { 
+      ...reqBody, 
+      userId: reqBody.userId, 
+      file: fileUrl, 
+      originalFileName, 
+      publicId // Lưu public_id vào cơ sở dữ liệu
+    };
 
     const createdTicket = await ticketModel.createNew(newTicket);
     return await ticketModel.findOneById(createdTicket.insertedId);
@@ -23,22 +36,64 @@ const createNew = async (reqBody) => {
     throw error;
   }
 };
-
-
 // Cập nhật ticket
-
 const updateById = async (id, updateData, ticketFile) => {
   try {
-    //console.log("Service - Received ID:", id); // ✅ Debug ID
-
     const objectId = new ObjectId(String(id));
+
+    // Lấy thông tin ticket hiện tại
+    const existingTicket = await ticketModel.findOneById(objectId);
+    if (!existingTicket) {
+      throw new Error("Ticket not found");
+    }
+
+    let fileUrl = null;
+    let originalFileName = null;
+    let publicId = null;
+
     if (ticketFile) {
-      updateData.file = ticketFile.filename;
-    } 
-    const updatedTicket = await ticketModel.updateById(objectId, updateData);
+      // Xóa file cũ trên Cloudinary nếu có
+      if (existingTicket.publicId) {
+        await CloudinaryProvider.deleteFile(existingTicket.publicId);
+        fileUrl = null;
+        originalFileName = null; // Xóa tên file gốc
+        publicId = null; // Xóa public_id
+      }
 
-    //console.log("Service - Updated Ticket:", updatedTicket); // ✅ Debug dữ liệu sau cập nhật
+      // Upload file mới lên Cloudinary
+      originalFileName = ticketFile.originalname;
+      const uploadResult = await CloudinaryProvider.streamUpload(
+        ticketFile.buffer,
+        'tickets',
+        originalFileName
+      );
+      fileUrl = uploadResult.secure_url;
+      publicId = uploadResult.public_id; // Lưu public_id mới
+    } else if (updateData.removeFile) {
+      if (existingTicket.publicId) {
+        //console.log("Deleting file on Cloudinary with publicId:", existingTicket.publicId);
+        try {
+          const deleteResult = await CloudinaryProvider.deleteFile(existingTicket.publicId);
+          //console.log("Cloudinary Delete Result:", deleteResult);
+        } catch (error) {
+          console.error("Error deleting file on Cloudinary:", error);
+        }
+      } else {
+        console.warn("No publicId found for the ticket. Skipping file deletion.");
+      }
+      fileUrl = null;
+      originalFileName = null; // Xóa tên file gốc
+      publicId = null; // Xóa public_id
+    }
+    const updatedData = {
+      ...updateData,
+      ...(fileUrl !== undefined && { file: fileUrl }),
+      ...(originalFileName !== undefined && { originalFileName }),
+      ...(publicId !== undefined && { publicId }),
+    };
 
+    const updatedTicket = await ticketModel.updateById(objectId, updatedData);
+    //console.log("Updated Ticket:", updatedTicket);
     return updatedTicket;
   } catch (error) {
     console.error("Service - Error Updating Ticket:", error);
@@ -48,9 +103,31 @@ const updateById = async (id, updateData, ticketFile) => {
 // Xóa ticket
 const deleteById = async (id) => {
   try {
+    // Lấy thông tin ticket hiện tại
+    const existingTicket = await ticketModel.findOneById(id);
+    if (!existingTicket) {
+      throw new Error("Ticket not found");
+    }
+
+    // Xóa file trên Cloudinary nếu có
+    if (existingTicket.publicId) {
+      //console.log("Deleting file on Cloudinary with publicId:", existingTicket.publicId);
+      try {
+        const deleteResult = await CloudinaryProvider.deleteFile(existingTicket.publicId);
+        //console.log("Cloudinary Delete Result:", deleteResult);
+      } catch (error) {
+        console.error("Error deleting file on Cloudinary:", error);
+      }
+    } else {
+      console.warn("No publicId found for the ticket. Skipping file deletion.");
+    }
+
+    // Xóa ticket trong cơ sở dữ liệu
     await ticketModel.deleteById(id);
-    return { message: "Ticket deleted successfully!" };
+
+    return { message: "Ticket and associated file deleted successfully!" };
   } catch (error) {
+    console.error("Service - Error Deleting Ticket:", error);
     throw error;
   }
 };

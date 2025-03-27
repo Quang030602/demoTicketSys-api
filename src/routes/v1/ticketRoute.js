@@ -10,7 +10,7 @@ Router.route('/')
   .get(authMiddleware.isAuthorized, ticketController.getAll) // ✅ Thêm middleware xác thực
   .post(
     authMiddleware.isAuthorized, 
-    multerUploadMiddleware.upload.single('file'),  
+    multerUploadMiddleware.upload.single('file'),  // Đổi tên trường thành "file"
     ticketValidation.createNew, 
     ticketController.createNew
   );
@@ -21,9 +21,8 @@ Router.get('/closed', ticketController.getClosedTickets);
   
   
 Router.route('/:id')
-  .put(
-    authMiddleware.isAuthorized,
-    multerUploadMiddleware.upload.single('file'), // ✅ Thêm middleware upload file
+  .put(    
+    multerUploadMiddleware.upload.single('file'), // Đổi tên trường thành "file"
     ticketController.updateById
   ) // API cập nhật ticket
   .delete(ticketController.deleteById); // API xóa ticket

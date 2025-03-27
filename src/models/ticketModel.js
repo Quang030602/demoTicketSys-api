@@ -1,20 +1,21 @@
 
 import Joi from 'joi'
 import { ObjectId } from 'mongodb'
-import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
 import { GET_DB } from '~/config/mongodb'
 
 // Define Collection (name & schema)
 const TICKET_COLLECTION_NAME = 'tickets'
 // Định nghĩa schema cho ticket
 const TICKET_COLLECTION_SCHEMA = Joi.object({
-  userId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required(),// ✅ Thêm userId
+  userId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required(),
   fullName: Joi.string().required().min(3).max(100).trim().strict(),
   email: Joi.string().email().required().trim().strict(),
   phone: Joi.string().pattern(/^[0-9]{10,15}$/).required().trim().strict(),
   address: Joi.string().required().min(5).max(255).trim().strict(),
   description: Joi.string().required().min(3).max(1024).allow('').strict(),
   file: Joi.string().allow(null, ''),
+  originalFileName: Joi.string().allow(null, ''),
+  publicId: Joi.string().allow(null, ''), // Thêm trường này
   category: Joi.string().valid('general', 'technical', 'billing', 'support').required().trim().strict(),
   subCategory: Joi.alternatives().conditional('category', {
     is: 'general',
@@ -68,46 +69,22 @@ const VALID_UPDATE_FIELDS = [
 
 const updateById = async (id, updateData) => {
   try {
-    //console.log("Updating Ticket ID:", id);
-
     const db = GET_DB();
-    if (!db) throw new Error("Database connection is not established");
-
-    // 🔥 Lọc chỉ các trường hợp lệ
-    const filteredUpdateData = Object.keys(updateData)
-      .filter((key) => VALID_UPDATE_FIELDS.includes(key))
-      .reduce((obj, key) => {
-        obj[key] = updateData[key];
-        return obj;
-      }, {});
-
-
-    if (Object.keys(filteredUpdateData).length === 0) {
-      console.warn("⚠ Warning: No valid fields to update.");
-      return null; // Không có gì để cập nhật
-    }
-
     const updateResult = await db.collection("tickets").updateOne(
       { _id: new ObjectId(String(id)) },
-      { $set: filteredUpdateData }
+      { $set: updateData }
     );
 
-
     if (updateResult.modifiedCount === 0) {
-      console.warn("⚠ Warning: No document was modified.");
+      console.warn("⚠ Warning: No fields were updated.");
+      return null;
     }
 
-    // 🔥 Trả về dữ liệu sau khi cập nhật
-    const updatedDocument = await db.collection("tickets").findOne({ _id: new ObjectId(id) });
-
-    //console.log("MongoDB Updated Document:", updatedDocument);
-    return updatedDocument;
+    return await db.collection("tickets").findOne({ _id: new ObjectId(id) });
   } catch (error) {
-    console.error("MongoDB Update Error:", error);
     throw new Error(error);
   }
 };
-
 const deleteById = async (id) => {
   try {
     await GET_DB()
@@ -117,7 +94,6 @@ const deleteById = async (id) => {
     throw new Error(error);
   }
 };
-
 const findAll = async (filter) => {
   try {
     //console.log("Filter in findAll:", filter);

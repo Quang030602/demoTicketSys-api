@@ -3,7 +3,6 @@ import { StatusCodes } from 'http-status-codes';
 import ApiError from '~/utils/ApiError';
 
 const createNew = async (req, res, next) => {
-  // Cập nhật schema để phù hợp với dữ liệu mới
   const ticketSchema = Joi.object({
     userId: Joi.string().pattern(/^[0-9a-fA-F]{24}$/).required(),
     fullName: Joi.string().required().min(3).max(100).trim().strict(),
@@ -12,8 +11,10 @@ const createNew = async (req, res, next) => {
     address: Joi.string().required().min(5).max(255).trim().strict(),
     description: Joi.string().required().min(3).max(1024).strict(),
     file: Joi.string().allow(null, ''), // Chấp nhận null hoặc URL file
-    category: Joi.string().valid('technical', 'billing', 'support','general').required().trim().strict(),
-    subCategory: Joi.string().required().trim().strict().allow(null,'')
+    originalFileName: Joi.string().allow(null, ''), // Chấp nhận tên file gốc
+    publicId: Joi.string().allow(null, ''), // Thêm trường này để xác thực publicId
+    category: Joi.string().valid('technical', 'billing', 'support', 'general').required().trim().strict(),
+    subCategory: Joi.string().required().trim().strict().allow(null, '')
   });
 
   try {
