@@ -138,11 +138,12 @@ const login = async (reqBody) => {
     //   refreshToken,
     //   userId: existUser._id.toString(),
     // });
-
+    
     return {
       accessToken,
       refreshToken,
-      userId: existUser._id.toString(), // ✅ Trả về userId rõ ràng
+      userId: existUser._id.toString(), 
+      userRole: existUser.role,
       ...pickUser(existUser),
     };
   } catch (error) {

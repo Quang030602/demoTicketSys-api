@@ -16,8 +16,8 @@ Router.route('/')
   );
 
   
-Router.get('/open', ticketController.getOpenTickets);
-Router.get('/closed', ticketController.getClosedTickets);
+Router.get('/open', authMiddleware.isAuthorized, ticketController.getOpenTickets);
+Router.get('/closed', authMiddleware.isAuthorized, ticketController.getClosedTickets);
   
   
 Router.route('/:id')

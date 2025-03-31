@@ -115,7 +115,15 @@ const getStatus = async (req, res, next) => {
 };
 const getOpenTickets = async (req, res, next) => {
   try {
-    const tickets = await ticketService.getTicketsByStatus("Open");
+    const userId = req.jwtDecoded?._id; // Lấy userId từ token đã giải mã
+
+    if (!userId) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({ 
+        message: "Unauthorized: Missing userId" 
+      });
+    }
+
+    const tickets = await ticketService.getTicketsByStatusAndUser("Open", userId);
     res.status(StatusCodes.OK).json(tickets);
   } catch (error) {
     next(error);
@@ -124,7 +132,15 @@ const getOpenTickets = async (req, res, next) => {
 
 const getClosedTickets = async (req, res, next) => {
   try {
-    const tickets = await ticketService.getTicketsByStatus("Closed");
+    const userId = req.jwtDecoded?._id; // Lấy userId từ token đã giải mã
+
+    if (!userId) {
+      return res.status(StatusCodes.UNAUTHORIZED).json({ 
+        message: "Unauthorized: Missing userId" 
+      });
+    }
+
+    const tickets = await ticketService.getTicketsByStatusAndUser("Closed", userId);
     res.status(StatusCodes.OK).json(tickets);
   } catch (error) {
     next(error);

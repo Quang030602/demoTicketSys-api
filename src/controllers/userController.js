@@ -47,7 +47,8 @@ const login = async (req, res, next) => {
 
     res.status(StatusCodes.OK).json({
       message: "Login successful",
-      userId: result.userId, // ✅ Đảm bảo gửi userId về frontend
+      userId: result.userId,
+      userRole: result.userRole
     });
   } catch (error) {
     console.error("Login Controller Error:", error.message);

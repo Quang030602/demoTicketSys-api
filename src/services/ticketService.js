@@ -206,7 +206,20 @@ const getTicketsByUser = async (userId) => {
     throw error;
   }
 };
-
+const getTicketsByStatusAndUser = async (status, userId) => {
+  try {
+    // Tạo filter kết hợp cả status và userId
+    const filter = { 
+      status, 
+      userId 
+    };
+    
+    const tickets = await ticketModel.findAll(filter);
+    return tickets;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export const ticketService = {
   createNew,
@@ -216,5 +229,6 @@ export const ticketService = {
   updateStatus,
   findOneById,
   getTicketsByStatus,
-  getTicketsByUser
+  getTicketsByUser,
+  getTicketsByStatusAndUser
 };
