@@ -30,6 +30,5 @@ Router.route('/:id')
 Router.patch('/:id/status', ticketController.updateStatus);
 Router.get('/:id/status', ticketController.getStatus);
 
-Router.get('/user/:userId', ticketController.getTicketsByUser);
 
 export const ticketRoute = Router;

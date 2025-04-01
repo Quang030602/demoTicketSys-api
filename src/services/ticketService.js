@@ -3,7 +3,15 @@ import { slugify } from "~/utils/formatters";
 import { ticketModel } from "~/models/ticketModel";
 import { GET_DB } from '~/config/mongodb'
 import { CloudinaryProvider } from "~/providers/CloudinaryProvider";
+import nodemailer from 'nodemailer'
 
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.ADMIN_EMAIL_ADDRESS, // Đặt email trong biến môi trường
+    pass: process.env.ADMIN_EMAIL_PASSWORD // Dùng mật khẩu ứng dụng
+  }
+})
 const createNew = async (reqBody, ticketFile) => {
   try {
     let fileUrl = null;
@@ -18,7 +26,7 @@ const createNew = async (reqBody, ticketFile) => {
         originalFileName
       );
       fileUrl = uploadResult.secure_url;
-      publicId = uploadResult.public_id; // Lưu public_id
+      publicId = uploadResult.public_id;
     }
 
     const newTicket = { 
@@ -26,11 +34,43 @@ const createNew = async (reqBody, ticketFile) => {
       userId: reqBody.userId, 
       file: fileUrl, 
       originalFileName, 
-      publicId // Lưu public_id vào cơ sở dữ liệu
+      publicId 
     };
-
+    
     const createdTicket = await ticketModel.createNew(newTicket);
-    return await ticketModel.findOneById(createdTicket.insertedId);
+    
+    // Lấy thông tin ticket đầy đủ sau khi tạo
+    const fullTicket = await ticketModel.findOneById(createdTicket.insertedId);
+    
+    // Kiểm tra email tồn tại trước khi gửi
+    if (reqBody.email) {
+      const mailOptions = {
+        from: `"AiMier Support" <${process.env.ADMIN_EMAIL_ADDRESS}>`,
+        to: reqBody.email, // Sử dụng email từ reqBody thay vì createdTicket
+        subject: 'Your ticket has been created',
+        html: `
+          <h3>Your ticket has been created successfully</h3>
+          <p><strong>Full Name:</strong> ${reqBody.fullName}</p>
+          <p><strong>Email:</strong> ${reqBody.email}</p>
+          <p><strong>Category:</strong> ${reqBody.category}</p>
+          <p><strong>Subcategory:</strong> ${reqBody.subCategory || 'N/A'}</p>
+          <p><strong>Description:</strong> ${reqBody.description}</p>
+          ${fileUrl ? `<p><strong>Attached File:</strong> <a href="${fileUrl}">View File</a></p>` : ''}
+          <p><strong>Status:</strong> Open</p>
+          <p>Thank you for contacting us. We will process your request as soon as possible.</p>
+        `
+      };
+      
+      try {
+        await transporter.sendMail(mailOptions);
+        console.log(`Confirmation email sent to ${reqBody.email}`);
+      } catch (emailError) {
+        console.error("Failed to send email notification:", emailError);
+        // Không throw lỗi này, chỉ log thôi để không ảnh hưởng đến việc tạo ticket
+      }
+    }
+    
+    return fullTicket;
   } catch (error) {
     console.error("❌ Lỗi trong ticketService:", error.message);
     throw error;
@@ -54,6 +94,7 @@ const updateById = async (id, updateData, ticketFile) => {
     if (ticketFile) {
       // Xóa file cũ trên Cloudinary nếu có
       if (existingTicket.publicId) {
+        await CloudinaryProvider.smartDeleteFile(existingTicket.publicId);
         await CloudinaryProvider.deleteFile(existingTicket.publicId);
         fileUrl = null;
         originalFileName = null; // Xóa tên file gốc
@@ -71,16 +112,14 @@ const updateById = async (id, updateData, ticketFile) => {
       publicId = uploadResult.public_id; // Lưu public_id mới
     } else if (updateData.removeFile) {
       if (existingTicket.publicId) {
-        //console.log("Deleting file on Cloudinary with publicId:", existingTicket.publicId);
         try {
-          const deleteResult = await CloudinaryProvider.deleteFile(existingTicket.publicId);
-          //console.log("Cloudinary Delete Result:", deleteResult);
+          // Sử dụng hàm smartDeleteFile để thử nhiều resource_type khác nhau
+          const deleteResult = await CloudinaryProvider.smartDeleteFile(existingTicket.publicId);
+          console.log("Cloudinary File deleted successfully:", deleteResult);
         } catch (error) {
           console.error("Error deleting file on Cloudinary:", error);
-        }
-      } else {
-        console.warn("No publicId found for the ticket. Skipping file deletion.");
-      }
+          // Vẫn tiếp tục xóa ticket ngay cả khi xóa file thất bại       }
+        
       fileUrl = null;
       originalFileName = null; // Xóa tên file gốc
       publicId = null; // Xóa public_id
@@ -94,12 +133,12 @@ const updateById = async (id, updateData, ticketFile) => {
 
     const updatedTicket = await ticketModel.updateById(objectId, updatedData);
     //console.log("Updated Ticket:", updatedTicket);
-    return updatedTicket;
-  } catch (error) {
+    return updatedTicket
+  }}} catch (error) {
     console.error("Service - Error Updating Ticket:", error);
     throw error;
   }
-};
+}
 // Xóa ticket
 const deleteById = async (id) => {
   try {
@@ -183,7 +222,7 @@ const updateStatus = async (id, status) => {
 const findOneById = async (id) => {
   try {
       const db = GET_DB();
-      const ticket = await db.collection("tickets").findOne({ _id: new ObjectId(id) });
+      const ticket = await db.collection("tickets").findOne({ _id: new ObjectId(String(id)) });
 
       return ticket;
   } catch (error) {
@@ -208,19 +247,23 @@ const getTicketsByUser = async (userId) => {
 };
 const getTicketsByStatusAndUser = async (status, userId) => {
   try {
-    // Tạo filter kết hợp cả status và userId
+    if (!userId) {
+      throw new Error("userId is required");
+    }
+
+    // Tạo filter với status và userId
     const filter = { 
       status, 
-      userId 
+      userId
     };
     
     const tickets = await ticketModel.findAll(filter);
     return tickets;
   } catch (error) {
+    console.error("Error in getTicketsByStatusAndUser:", error);
     throw error;
   }
-};
-
+}
 export const ticketService = {
   createNew,
   updateById,

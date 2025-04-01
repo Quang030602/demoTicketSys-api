@@ -117,7 +117,7 @@ const login = async (reqBody) => {
     }
 
     const userInfo = {
-      _id: existUser._id.toString(), // ✅ Chắc chắn userId là string
+      _id: existUser._id.toString(), 
       email: existUser.email,
     };
 
