@@ -56,9 +56,24 @@ const update = async (req, res, next) => {
     next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))
   }
 }
+
+const loginWithQR = async (req, res, next) => {
+  const correctCondition = Joi.object({
+    qrData: Joi.string().required()
+  })
+
+  try {
+    await correctCondition.validateAsync(req.body, { abortEarly: false })
+    next()
+  } catch (error) {
+    next(new ApiError(StatusCodes.UNPROCESSABLE_ENTITY, new Error(error).message))
+  }
+}
+
 export const userValidation = {
   createNew,
   login,
   verifyAccount,
-  update
+  update,
+  loginWithQR
 }

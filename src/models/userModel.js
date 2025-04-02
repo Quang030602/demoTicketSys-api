@@ -20,6 +20,11 @@ const USER_COLLECTION_SCHEMA = Joi.object({
 
   isActive: Joi.boolean().default(false),
   verifyToken: Joi.string(),
+  
+  qrCode: Joi.object({
+    id: Joi.string().required(),
+    dataURL: Joi.string().required()
+  }).default(null),
 
   createdAt: Joi.date().timestamp('javascript').default(Date.now()),
   updatedAt: Joi.date().timestamp('javascript').default(null),

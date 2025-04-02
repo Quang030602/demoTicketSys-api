@@ -56,6 +56,48 @@ const login = async (req, res, next) => {
   }
 };
 
+const loginWithQR = async (req, res, next) => {
+  try {
+    const result = await userService.loginWithQR(req.body);
+
+    if (!result) {
+      throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, "Login failed, no data returned");
+    }
+
+    res.cookie("accessToken", result.accessToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: ms("14 days"),
+    });
+
+    res.cookie("refreshToken", result.refreshToken, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "None",
+      maxAge: ms("30 days")
+    });
+
+    res.status(StatusCodes.OK).json({
+      message: "QR code login successful",
+      userId: result.userId,
+      userRole: result.userRole
+    });
+  } catch (error) {
+    console.error("QR Login Controller Error:", error.message);
+    next(error);
+  }
+};
+
+const generateNewQRCode = async (req, res, next) => {
+  try {
+    const userId = req.jwtDecoded._id;
+    const result = await userService.generateNewQRCode(userId);
+    res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    next(error);
+  }
+};
 
 const logout = async (req, res, next) => {
   try {
@@ -96,6 +138,7 @@ export const userController = {
   login,
   logout,
   refreshToken,
-  update
-
+  update,
+  loginWithQR,
+  generateNewQRCode
 }

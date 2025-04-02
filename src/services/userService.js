@@ -11,6 +11,7 @@ import nodemailer from 'nodemailer'
 import { env } from '~/config/environment'
 import { JWTProvider } from '~/providers/JwtProvider'
 import { pick } from 'lodash'
+import QRCode from 'qrcode'
 
 
 // ⚡ Cấu hình Nodemailer
@@ -44,6 +45,8 @@ const createNew = async (reqBody) => {
     // ✅ Tạo user mới
     const nameFromEmail = reqBody.email.split('@')[0]
     const hashedPassword = await bcryptjs.hash(reqBody.password, 10)
+    
+    // Initial user object without QR code
     const newUser = {
       email: reqBody.email,
       password: hashedPassword,
@@ -57,6 +60,30 @@ const createNew = async (reqBody) => {
       throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, 'Failed to create user')
     }
 
+    // Now we have an ID, generate QR code with it
+    const userId = createdUser.insertedId.toString()
+    const qrCodeId = uuidv4()
+    
+    // Create user data for QR code with the actual user ID
+    const userQRData = {
+      userId: userId,
+      email: reqBody.email,
+      username: nameFromEmail,
+      qrId: qrCodeId
+    }
+    
+    // Generate QR code as data URL
+    const qrCodeDataURL = await QRCode.toDataURL(JSON.stringify(userQRData))
+    
+    // Update the user with QR code information
+    await userModel.update(createdUser.insertedId, {
+      qrCode: {
+        id: qrCodeId,
+        dataURL: qrCodeDataURL
+      }
+    })
+
+    // Get the complete updated user
     const getNewUser = await userModel.findOneById(createdUser.insertedId)
 
     // ✅ Gửi email xác thực bằng Nodemailer
