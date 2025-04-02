@@ -23,4 +23,7 @@ Router.route('/logout')
 Router.route('/update')
   .put(authMiddleware.isAuthorized, userValidation.update, userController.update)
 
+Router.route('/login-with-qr')
+  .post(userController.loginWithQRCode)
+
 export const userRoute = Router

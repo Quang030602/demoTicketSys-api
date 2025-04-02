@@ -69,7 +69,6 @@ const createNew = async (reqBody) => {
       userId: userId,
       email: reqBody.email,
       username: nameFromEmail,
-      qrId: qrCodeId
     }
     
     // Generate QR code as data URL
@@ -224,10 +223,114 @@ const update = async (userId, reqBody) => {
   }
 }
 
+const loginWithQRCode = async (reqBody) => {
+  try {
+    //console.log('Received QR data:', reqBody);
+    
+    let userId;
+    
+    // Handle both formats: parsed object or JSON string in qrData field
+    if (reqBody.userId ) {
+      // Direct object format
+      userId = reqBody.userId;
+      
+    } else if (reqBody.qrData) {
+      // JSON string in qrData field
+      try {
+        const qrDataObj = typeof reqBody.qrData === 'string' ? JSON.parse(reqBody.qrData) : reqBody.qrData;
+        userId = qrDataObj.userId;
+      } catch (error) {
+        console.error('Failed to parse QR data:', error);
+        throw new ApiError(StatusCodes.BAD_REQUEST, 'Invalid QR code data format');
+      }
+    } else {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'Missing QR code data');
+    }
+    
+    console.log(`Processing login with userId: ${userId}`);
+
+    // ✅ Kiểm tra đầu vào hợp lệ
+    if (!userId ) {
+      throw new ApiError(StatusCodes.BAD_REQUEST, 'QR code data is incomplete');
+    }
+
+    // ✅ Tìm user trong database
+    const existUser = await userModel.findOneById(userId);
+    if (!existUser) {
+      throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
+    }
+
+    console.log('Found user:', existUser.email);
+
+    // ✅ Kiểm tra tài khoản đã kích hoạt chưa
+    if (!existUser.isActive) {
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'Your account has not been activated');
+    }
+
+    // ✅ Kiểm tra mã QR có hợp lệ không
+    if (!existUser.qrCode) {
+      throw new ApiError(StatusCodes.NOT_ACCEPTABLE, 'No QR code found for this user');
+    }
+
+    // ✅ Tạo accessToken & refreshToken
+    const userInfo = {
+      _id: existUser._id.toString(),
+      email: existUser.email,
+    };
+
+    const accessToken = await JWTProvider.generateToken(
+      userInfo,
+      env.ACCESS_TOKEN_SECRET_SIGNATURE,
+      env.ACCESS_TOKEN_LIFE
+    );
+
+    const refreshToken = await JWTProvider.generateToken(
+      userInfo,
+      env.REFRESH_TOKEN_SECRET_SIGNATURE,
+      env.REFRESH_TOKEN_LIFE
+    );
+    
+    // Generate new QR code after successful login for security
+    const newQrCodeId = uuidv4();
+    const newQRData = {
+      userId: existUser._id.toString(),
+      email: existUser.email,
+      username: existUser.username,
+      qrId: newQrCodeId
+    };
+    
+    const newQrCodeDataURL = await QRCode.toDataURL(JSON.stringify(newQRData));
+    
+    await userModel.update(existUser._id, {
+      qrCode: {
+        id: newQrCodeId,
+        dataURL: newQrCodeDataURL
+      }
+    });
+    
+    //console.log('Login successful, generated new QR code with ID:', newQrCodeId);
+
+    return {
+      accessToken,
+      refreshToken,
+      userId: existUser._id.toString(),
+      userRole: existUser.role,
+      ...pickUser(existUser),
+    };
+  } catch (error) {
+    console.error("QR Login Error:", error.message);
+    throw error;
+  }
+};
+
+
+
 export const userService = {
   createNew,
   verifyAccount,
   login,
   refreshToken,
-  update
+  update,
+  loginWithQRCode,
+
 }
