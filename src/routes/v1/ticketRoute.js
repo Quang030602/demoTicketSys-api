@@ -22,6 +22,7 @@ Router.get('/closed', authMiddleware.isAuthorized, ticketController.getClosedTic
   
 Router.route('/:id')
   .put(    
+    authMiddleware.isAuthorized,
     multerUploadMiddleware.upload.single('file'), // Đổi tên trường thành "file"
     ticketController.updateById
   ) // API cập nhật ticket

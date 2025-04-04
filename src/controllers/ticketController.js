@@ -24,33 +24,37 @@ const createNew = async (req, res, next) => {
 const updateById = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const ticketFile = req.file;   
-    //console.log("Controller -> File uploaded:", ticketFile);
-   
-    // Debug ID
-   // console.log("Received ID:", id);
-    //console.log("Is ID Valid:", ObjectId.isValid(id));
-
+    const ticketFile = req.file;
+    
+    // Log để debug
+    console.log("Update request for ticket ID:", id);
+    console.log("Update data:", req.body);
+    console.log("File included:", ticketFile ? "Yes" : "No");
+    
     // Kiểm tra nếu ID không hợp lệ
     if (!ObjectId.isValid(id)) {
       return res.status(StatusCodes.BAD_REQUEST).json({ 
-        message: "Invalid ticket ID format. Must be a 24-character hex string.", 
-        receivedId: id
+        message: "Invalid ticket ID format" 
       });
     }
 
-    const ticket = await ticketService.updateById(id, req.body,ticketFile);
+    const ticket = await ticketService.updateById(id, req.body, ticketFile);
     
     if (!ticket) {
-      return res.status(StatusCodes.NOT_FOUND).json({ message: "Ticket not found." });
+      return res.status(StatusCodes.NOT_FOUND).json({ 
+        message: "Ticket not found or update failed" 
+      });
     }
 
     res.status(StatusCodes.OK).json(ticket);
   } catch (error) {
+    console.error("Controller - Error updating ticket:", error);
+    if (error.message === "Ticket not found") {
+      return res.status(StatusCodes.NOT_FOUND).json({ message: error.message });
+    }
     next(error);
   }
 };
-
 const deleteById = async (req, res, next) => {
   try {
     const message = await ticketService.deleteById(req.params.id);

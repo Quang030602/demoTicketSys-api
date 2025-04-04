@@ -72,7 +72,8 @@ const updateById = async (id, updateData) => {
     const db = GET_DB();
     const updateResult = await db.collection("tickets").updateOne(
       { _id: new ObjectId(String(id)) },
-      { $set: updateData }
+      { $set: updateData },
+      { returnDocument: 'after' }
     );
 
     if (updateResult.modifiedCount === 0) {
@@ -80,7 +81,7 @@ const updateById = async (id, updateData) => {
       return null;
     }
 
-    return await db.collection("tickets").findOne({ _id: new ObjectId(id) });
+    return await db.collection("tickets").findOne({ _id: new ObjectId(String(id)) });
   } catch (error) {
     throw new Error(error);
   }
